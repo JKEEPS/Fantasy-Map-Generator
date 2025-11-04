@@ -19,7 +19,7 @@ function generateGrid() {
   Math.random = aleaPRNG(seed); // reset PRNG
   const {spacing, cellsDesired, boundary, points, cellsX, cellsY} = placePoints();
   const {cells, vertices} = calculateVoronoi(points, boundary);
-  return {spacing, cellsDesired, boundary, points, cellsX, cellsY, cells, vertices, seed};
+  return {spacing, cellsDesired, boundary, points, cellsX, cellsY, cells, vertices, seed, cellDetails: {}};
 }
 
 // place random points to calculate Voronoi diagram

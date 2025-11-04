@@ -789,6 +789,132 @@ fieldset {
 
 #cellInfo {
   user-select: text;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-right: 0.2em;
+}
+
+#cellInfo .cell-info-page {
+  max-height: calc(70vh - 5em);
+  overflow-y: auto;
+  padding-right: 0.3em;
+}
+
+#cellInfo .info-tabs {
+  display: flex;
+  gap: 0.3em;
+  margin-bottom: 0.6em;
+}
+
+#cellInfo .info-tab {
+  flex: 1;
+  border: 1px solid #555;
+  background: #2f2f2f;
+  color: #f0f0f0;
+  padding: 0.3em 0.4em;
+  cursor: pointer;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+#cellInfo .info-tab.active {
+  background: #696969;
+  border-color: #777;
+}
+
+#cellInfo .info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+#cellInfo .info-table th {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.25em 0.4em 0.25em 0;
+  white-space: nowrap;
+}
+
+#cellInfo .info-table td {
+  padding: 0.25em 0;
+}
+
+#cellInfo .info-table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+#cellInfo .cell-info-page.hidden {
+  display: none;
+}
+
+#cellInfo .info-section {
+  margin-top: 0.7em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+#cellInfo .info-section label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+#cellInfo .info-input,
+#cellInfo .info-select,
+#cellInfo .info-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #4a4a4a;
+  background: #1f1f1f;
+  color: #f0f0f0;
+  padding: 0.35em 0.45em;
+  border-radius: 2px;
+  font: inherit;
+}
+
+#cellInfo .info-textarea {
+  min-height: 4.5em;
+  resize: vertical;
+}
+
+#cellInfo .info-entity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+}
+
+#cellInfo .info-entity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em;
+}
+
+#cellInfo .info-entity-button {
+  border: 1px solid #555;
+  background: #3b3b3b;
+  color: #f7f7f7;
+  padding: 0.2em 0.6em;
+  cursor: pointer;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+#cellInfo .info-entity-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#cellInfo .info-select:disabled,
+#cellInfo .info-input:disabled,
+#cellInfo .info-textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#gridEntityEditor .info-textarea {
+  min-height: 14em;
 }
 
 #tooltip {

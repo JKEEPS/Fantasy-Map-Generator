@@ -5750,26 +5750,235 @@
       </div>
 
       <div id="cellInfo" style="display: none" class="dialog stable">
-        <p>
-          <b>Cell:</b> <span id="infoCell"></span> <b>X:</b> <span id="infoX"></span> <b>Y:</b> <span id="infoY"></span>
-        </p>
-        <p><b>Latitude:</b> <span id="infoLat"></span></p>
-        <p><b>Longitude:</b> <span id="infoLon"></span></p>
-        <p><b>Geozone:</b> <span id="infoGeozone"></span></p>
-        <p><b>Area:</b> <span id="infoArea">0</span></p>
-        <p><b>Type:</b> <span id="infoFeature">n/a</span></p>
-        <p><b>Precipitation:</b> <span id="infoPrec">0</span></p>
-        <p><b>River:</b> <span id="infoRiver">no</span></p>
-        <p><b>Population:</b> <span id="infoPopulation">0</span></p>
-        <p><b>Elevation:</b> <span id="infoElevation">0</span></p>
-        <p><b>Depth:</b> <span id="infoDepth">0</span></p>
-        <p><b>Temperature:</b> <span id="infoTemp">0</span></p>
-        <p><b>Biome:</b> <span id="infoBiome">n/a</span></p>
-        <p><b>State:</b> <span id="infoState">n/a</span></p>
-        <p><b>Province:</b> <span id="infoProvince">n/a</span></p>
-        <p><b>Culture:</b> <span id="infoCulture">n/a</span></p>
-        <p><b>Religion:</b> <span id="infoReligion">n/a</span></p>
-        <p><b>Burg:</b> <span id="infoBurg">n/a</span></p>
+        <div id="cellInfoTabs" class="info-tabs">
+          <button type="button" class="info-tab active" data-page="cell">Cell</button>
+          <button type="button" class="info-tab" data-page="grid">Grid Square</button>
+        </div>
+
+        <div class="cell-info-page" data-page="cell">
+          <table class="info-table">
+            <tbody>
+              <tr>
+                <th>Cell</th>
+                <td><span id="infoCell">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Coordinates</th>
+                <td>X: <span id="infoX">0</span>; Y: <span id="infoY">0</span></td>
+              </tr>
+              <tr>
+                <th>Latitude</th>
+                <td><span id="infoLat">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Longitude</th>
+                <td><span id="infoLon">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Geozone</th>
+                <td><span id="infoGeozone">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Area</th>
+                <td><span id="infoArea">0</span></td>
+              </tr>
+              <tr>
+                <th>Surface</th>
+                <td><span id="infoCellSurface">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Distance to Coast</th>
+                <td><span id="infoCellDistance">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Feature</th>
+                <td><span id="infoFeature">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Biome</th>
+                <td><span id="infoBiome">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Temperature</th>
+                <td><span id="infoTemp">0</span></td>
+              </tr>
+              <tr>
+                <th>Precipitation</th>
+                <td><span id="infoPrec">0</span></td>
+              </tr>
+              <tr>
+                <th>Elevation</th>
+                <td><span id="infoElevation">0</span></td>
+              </tr>
+              <tr>
+                <th>Depth</th>
+                <td><span id="infoDepth">0</span></td>
+              </tr>
+              <tr>
+                <th>River</th>
+                <td><span id="infoRiver">no</span></td>
+              </tr>
+              <tr>
+                <th>Population</th>
+                <td><span id="infoPopulation">0</span></td>
+              </tr>
+              <tr>
+                <th>State</th>
+                <td><span id="infoState">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Province</th>
+                <td><span id="infoProvince">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Culture</th>
+                <td><span id="infoCulture">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Religion</th>
+                <td><span id="infoReligion">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Burg</th>
+                <td><span id="infoBurg">n/a</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="cell-info-page hidden" data-page="grid">
+          <table class="info-table">
+            <tbody>
+              <tr>
+                <th>Grid Cell</th>
+                <td><span id="infoGridCell">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Coordinates</th>
+                <td>X: <span id="infoGridX">0</span>; Y: <span id="infoGridY">0</span></td>
+              </tr>
+              <tr>
+                <th>Latitude</th>
+                <td><span id="infoGridLat">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Longitude</th>
+                <td><span id="infoGridLon">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Geozone</th>
+                <td><span id="infoGridGeozone">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Surface</th>
+                <td><span id="infoGridSurface">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Distance to Coast</th>
+                <td><span id="infoGridDistance">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Feature</th>
+                <td><span id="infoGridFeature">n/a</span></td>
+              </tr>
+              <tr>
+                <th>Elevation</th>
+                <td><span id="infoGridElevation">0</span></td>
+              </tr>
+              <tr>
+                <th>Depth</th>
+                <td><span id="infoGridDepth">0</span></td>
+              </tr>
+              <tr>
+                <th>Temperature</th>
+                <td><span id="infoGridTemp">0</span></td>
+              </tr>
+              <tr>
+                <th>Precipitation</th>
+                <td><span id="infoGridPrec">0</span></td>
+              </tr>
+              <tr>
+                <th>Neighbors</th>
+                <td><span id="infoGridNeighbors">0</span></td>
+              </tr>
+              <tr>
+                <th>Spacing</th>
+                <td><span id="infoGridSpacing">0</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="info-section">
+            <label for="infoGridLore">Lore</label>
+            <textarea
+              id="infoGridLore"
+              class="info-textarea"
+              rows="4"
+              placeholder="Write lore for this grid square"
+              spellcheck="true"
+            ></textarea>
+          </div>
+          <div class="info-section">
+            <div class="info-entity-header">
+              <label for="infoGridLocationsSelect">Locations</label>
+              <div class="info-entity-actions">
+                <button type="button" id="infoGridLocationPopout" class="info-entity-button">Open</button>
+                <button type="button" id="infoGridLocationAdd" class="info-entity-button">Add</button>
+                <button type="button" id="infoGridLocationRemove" class="info-entity-button">Remove</button>
+              </div>
+            </div>
+            <select id="infoGridLocationsSelect" class="info-select"></select>
+            <input id="infoGridLocationName" class="info-input" type="text" placeholder="Location name" spellcheck="true" />
+            <textarea
+              id="infoGridLocationLore"
+              class="info-textarea"
+              rows="3"
+              placeholder="Describe the location"
+              spellcheck="true"
+            ></textarea>
+          </div>
+          <div class="info-section">
+            <div class="info-entity-header">
+              <label for="infoGridCharactersSelect">Characters</label>
+              <div class="info-entity-actions">
+                <button type="button" id="infoGridCharacterPopout" class="info-entity-button">Open</button>
+                <button type="button" id="infoGridCharacterAdd" class="info-entity-button">Add</button>
+                <button type="button" id="infoGridCharacterRemove" class="info-entity-button">Remove</button>
+              </div>
+            </div>
+            <select id="infoGridCharactersSelect" class="info-select"></select>
+            <input
+              id="infoGridCharacterName"
+              class="info-input"
+              type="text"
+              placeholder="Character name"
+              spellcheck="true"
+            />
+            <textarea
+              id="infoGridCharacterLore"
+              class="info-textarea"
+              rows="3"
+              placeholder="Describe the character"
+              spellcheck="true"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div id="gridEntityEditor" style="display: none" class="dialog">
+        <div class="info-section">
+          <label for="gridEntityEditorName">Name</label>
+          <input id="gridEntityEditorName" class="info-input" type="text" spellcheck="true" />
+        </div>
+        <div class="info-section">
+          <label for="gridEntityEditorLore">Lore</label>
+          <textarea
+            id="gridEntityEditorLore"
+            class="info-textarea"
+            rows="10"
+            spellcheck="true"
+            placeholder="Describe the selected item"
+          ></textarea>
+        </div>
       </div>
 
       <div id="iconSelector" style="display: none" class="dialog">

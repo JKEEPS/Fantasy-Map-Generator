@@ -215,6 +215,7 @@ function getGridCellsData() {
     points: grid.points,
     boundary: grid.boundary,
     seed: grid.seed,
+    cellDetails: JSON.parse(JSON.stringify(grid.cellDetails || {})),
     features: pack.features
   };
   return gridData;

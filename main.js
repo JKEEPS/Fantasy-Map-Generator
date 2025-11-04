@@ -625,8 +625,14 @@ async function generate(options) {
     applyGraphSize();
     randomizeOptions();
 
-    if (shouldRegenerateGrid(grid, precreatedSeed)) grid = precreatedGraph || generateGrid();
-    else delete grid.cells.h;
+    const regenerateGrid = shouldRegenerateGrid(grid, precreatedSeed);
+    if (regenerateGrid) {
+      grid = precreatedGraph || generateGrid();
+      grid.cellDetails = {};
+    } else {
+      delete grid.cells.h;
+      grid.cellDetails = grid.cellDetails && typeof grid.cellDetails === "object" ? grid.cellDetails : {};
+    }
     grid.cells.h = await HeightmapGenerator.generate(grid);
     pack = {}; // reset pack
 

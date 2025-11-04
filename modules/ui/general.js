@@ -49,6 +49,94 @@ function clearMainTip() {
   tooltip.innerHTML = "";
 }
 
+const cellInfoTabs = document.getElementById("cellInfoTabs");
+if (cellInfoTabs) {
+  cellInfoTabs.addEventListener("click", event => {
+    const button = event.target.closest("button[data-page]");
+    if (!button) return;
+    showCellInfoPage(button.dataset.page);
+  });
+}
+
+function showCellInfoPage(page = "cell") {
+  const tabs = document.querySelectorAll("#cellInfoTabs button[data-page]");
+  tabs.forEach(tab => tab.classList.toggle("active", tab.dataset.page === page));
+
+  const pages = document.querySelectorAll("#cellInfo .cell-info-page");
+  pages.forEach(section => section.classList.toggle("hidden", section.dataset.page !== page));
+}
+
+window.showCellInfoPage = showCellInfoPage;
+
+const gridLoreInput = byId("infoGridLore");
+const gridLocationsSelect = byId("infoGridLocationsSelect");
+const gridLocationNameInput = byId("infoGridLocationName");
+const gridLocationLoreInput = byId("infoGridLocationLore");
+const gridLocationAddButton = byId("infoGridLocationAdd");
+const gridLocationRemoveButton = byId("infoGridLocationRemove");
+const gridLocationPopoutButton = byId("infoGridLocationPopout");
+const gridCharactersSelect = byId("infoGridCharactersSelect");
+const gridCharacterNameInput = byId("infoGridCharacterName");
+const gridCharacterLoreInput = byId("infoGridCharacterLore");
+const gridCharacterAddButton = byId("infoGridCharacterAdd");
+const gridCharacterRemoveButton = byId("infoGridCharacterRemove");
+const gridCharacterPopoutButton = byId("infoGridCharacterPopout");
+const gridEntityEditor = byId("gridEntityEditor");
+const gridEntityEditorName = byId("gridEntityEditorName");
+const gridEntityEditorLore = byId("gridEntityEditorLore");
+
+const gridEntityControls = {
+  locations: {
+    property: "locations",
+    label: "location",
+    select: gridLocationsSelect,
+    addButton: gridLocationAddButton,
+    removeButton: gridLocationRemoveButton,
+    popoutButton: gridLocationPopoutButton,
+    nameInput: gridLocationNameInput,
+    loreInput: gridLocationLoreInput,
+    defaultName: "New location",
+    emptyLabel: "No locations"
+  },
+  characters: {
+    property: "characters",
+    label: "character",
+    select: gridCharactersSelect,
+    addButton: gridCharacterAddButton,
+    removeButton: gridCharacterRemoveButton,
+    popoutButton: gridCharacterPopoutButton,
+    nameInput: gridCharacterNameInput,
+    loreInput: gridCharacterLoreInput,
+    defaultName: "New character",
+    emptyLabel: "No characters"
+  }
+};
+
+const gridEntitySelection = {locations: null, characters: null};
+let currentGridCellId = null;
+let currentPackCellId = null;
+let syncGridDetails = false;
+let activeGridEntityEditor = null;
+
+gridLoreInput?.addEventListener("input", handleGridLoreInput);
+
+gridLocationAddButton?.addEventListener("click", () => handleGridEntityAdd("locations"));
+gridLocationRemoveButton?.addEventListener("click", () => handleGridEntityRemove("locations"));
+gridLocationPopoutButton?.addEventListener("click", () => handleGridEntityPopout("locations"));
+gridLocationsSelect?.addEventListener("change", () => handleGridEntitySelectionChange("locations"));
+gridLocationNameInput?.addEventListener("input", () => handleGridEntityNameInput("locations"));
+gridLocationLoreInput?.addEventListener("input", () => handleGridEntityLoreInput("locations"));
+
+gridCharacterAddButton?.addEventListener("click", () => handleGridEntityAdd("characters"));
+gridCharacterRemoveButton?.addEventListener("click", () => handleGridEntityRemove("characters"));
+gridCharacterPopoutButton?.addEventListener("click", () => handleGridEntityPopout("characters"));
+gridCharactersSelect?.addEventListener("change", () => handleGridEntitySelectionChange("characters"));
+gridCharacterNameInput?.addEventListener("input", () => handleGridEntityNameInput("characters"));
+gridCharacterLoreInput?.addEventListener("input", () => handleGridEntityLoreInput("characters"));
+
+gridEntityEditorName?.addEventListener("input", handleGridEntityEditorNameInput);
+gridEntityEditorLore?.addEventListener("input", handleGridEntityEditorLoreInput);
+
 // show tip at the bottom of the screen, consider possible translation
 function showDataTip(event) {
   if (!event.target) return;
@@ -258,37 +346,470 @@ function highlightEditorLine(editor, id, timeout = 10000) {
 // get cell info on mouse move
 function updateCellInfo(point, i, g) {
   const cells = pack.cells;
-  const x = (infoX.innerHTML = rn(point[0]));
-  const y = (infoY.innerHTML = rn(point[1]));
-  const f = cells.f[i];
-  infoLat.innerHTML = toDMS(getLatitude(y, 4), "lat");
-  infoLon.innerHTML = toDMS(getLongitude(x, 4), "lon");
-  infoGeozone.innerHTML = getGeozone(getLatitude(y, 4));
+  currentPackCellId = i;
+  currentGridCellId = g;
+  if (activeGridEntityEditor && activeGridEntityEditor.cellId !== g) closeGridEntityEditor();
+  const x = rn(point[0]);
+  const y = rn(point[1]);
+
+  infoX.innerHTML = x;
+  infoY.innerHTML = y;
+
+  const latitude = getLatitude(y, 4);
+  const longitude = getLongitude(x, 4);
+  infoLat.innerHTML = toDMS(latitude, "lat");
+  infoLon.innerHTML = toDMS(longitude, "lon");
+  infoGeozone.innerHTML = getGeozone(latitude);
 
   infoCell.innerHTML = i;
-  infoArea.innerHTML = cells.area[i] ? si(getArea(cells.area[i])) + " " + getAreaUnit() : "n/a";
-  infoElevation.innerHTML = getElevation(pack.features[f], pack.cells.h[i]);
-  infoDepth.innerHTML = getDepth(pack.features[f], point);
+  infoArea.innerHTML = cells.area[i] ? `${si(getArea(cells.area[i]))} ${getAreaUnit()}` : "n/a";
+
+  const featureId = cells.f[i];
+  const feature = featureId ? pack.features[featureId] : null;
+  const isLand = cells.h[i] >= 20;
+
+  infoCellSurface.innerHTML = isLand ? "Land" : "Water";
+  const cellDistance = pack.cells.t ? pack.cells.t[i] : undefined;
+  infoCellDistance.innerHTML = getDistanceToCoastLabel(cellDistance, isLand);
+
+  infoFeature.innerHTML = formatFeatureLabel(feature, featureId);
+  infoBiome.innerHTML = biomesData.name[cells.biome[i]] || "n/a";
+
   infoTemp.innerHTML = convertTemperature(grid.cells.temp[g]);
-  infoPrec.innerHTML = cells.h[i] >= 20 ? getFriendlyPrecipitation(i) : "n/a";
-  infoRiver.innerHTML = cells.h[i] >= 20 && cells.r[i] ? getRiverInfo(cells.r[i]) : "no";
-  infoState.innerHTML =
-    cells.h[i] >= 20
-      ? cells.state[i]
-        ? `${pack.states[cells.state[i]].fullName} (${cells.state[i]})`
-        : "neutral lands (0)"
-      : "no";
+  infoPrec.innerHTML = isLand ? getFriendlyPrecipitation(i) : "n/a";
+  infoElevation.innerHTML = feature ? getElevation(feature, pack.cells.h[i]) : "n/a";
+  infoDepth.innerHTML = feature ? getDepth(feature, point) : "n/a";
+  infoRiver.innerHTML = isLand && cells.r[i] ? getRiverInfo(cells.r[i]) : "no";
+  infoPopulation.innerHTML = getFriendlyPopulation(i);
+  infoBurg.innerHTML = cells.burg[i] ? `${pack.burgs[cells.burg[i]].name} (${cells.burg[i]})` : "no";
+
+  infoState.innerHTML = isLand
+    ? cells.state[i]
+      ? `${pack.states[cells.state[i]].fullName} (${cells.state[i]})`
+      : "neutral lands (0)"
+    : "no";
+
   infoProvince.innerHTML = cells.province[i]
     ? `${pack.provinces[cells.province[i]].fullName} (${cells.province[i]})`
     : "no";
+
   infoCulture.innerHTML = cells.culture[i] ? `${pack.cultures[cells.culture[i]].name} (${cells.culture[i]})` : "no";
   infoReligion.innerHTML = cells.religion[i]
     ? `${pack.religions[cells.religion[i]].name} (${cells.religion[i]})`
     : "no";
-  infoPopulation.innerHTML = getFriendlyPopulation(i);
-  infoBurg.innerHTML = cells.burg[i] ? pack.burgs[cells.burg[i]].name + " (" + cells.burg[i] + ")" : "no";
-  infoFeature.innerHTML = f ? pack.features[f].group + " (" + f + ")" : "n/a";
-  infoBiome.innerHTML = biomesData.name[cells.biome[i]];
+
+  const gridPoint = grid.points[g];
+  if (!gridPoint) return;
+
+  const [gx, gy] = gridPoint;
+  infoGridCell.innerHTML = g;
+  infoGridX.innerHTML = rn(gx);
+  infoGridY.innerHTML = rn(gy);
+
+  const gridLatitude = getLatitude(gy, 4);
+  const gridLongitude = getLongitude(gx, 4);
+  infoGridLat.innerHTML = toDMS(gridLatitude, "lat");
+  infoGridLon.innerHTML = toDMS(gridLongitude, "lon");
+  infoGridGeozone.innerHTML = getGeozone(gridLatitude);
+
+  const gridHeight = grid.cells.h[g];
+  const gridLand = gridHeight >= 20;
+  infoGridSurface.innerHTML = gridLand ? "Land" : "Water";
+
+  const gridDistance = grid.cells.t ? grid.cells.t[g] : undefined;
+  infoGridDistance.innerHTML = getDistanceToCoastLabel(gridDistance, gridLand);
+
+  const gridFeatureId = grid.cells.f ? grid.cells.f[g] : null;
+  const gridFeature = gridFeatureId ? grid.features?.[gridFeatureId] : null;
+  infoGridFeature.innerHTML = formatFeatureLabel(gridFeature, gridFeatureId);
+
+  infoGridElevation.innerHTML = gridLand ? `${getHeight(gridHeight)} (${gridHeight})` : "n/a";
+  infoGridDepth.innerHTML = gridLand ? `0 ${heightUnit.value}` : `${getHeight(gridHeight, "abs")} (${gridHeight})`;
+  infoGridTemp.innerHTML = convertTemperature(grid.cells.temp[g]);
+  infoGridPrec.innerHTML = getPrecipitation(grid.cells.prec[g]);
+  infoGridNeighbors.innerHTML = grid.cells.c[g]?.length ?? 0;
+  infoGridSpacing.innerHTML = `${rn(grid.spacing, 2)} px`;
+
+  const cellDetails = ensureGridCellDetails(g, false);
+  syncGridMetadataUI(cellDetails);
+}
+
+function syncGridMetadataUI(details) {
+  const metadata = details || {lore: "", locations: [], characters: []};
+  updateGridLoreUI(metadata);
+  populateGridEntityUI(metadata, "locations");
+  populateGridEntityUI(metadata, "characters");
+  refreshGridEntityEditor();
+}
+
+function updateGridLoreUI(metadata) {
+  if (!gridLoreInput) return;
+  const previousSync = syncGridDetails;
+  syncGridDetails = true;
+
+  if (currentGridCellId === null) {
+    gridLoreInput.value = "";
+    gridLoreInput.disabled = true;
+  } else {
+    gridLoreInput.disabled = false;
+    gridLoreInput.value = metadata.lore || "";
+  }
+
+  syncGridDetails = previousSync;
+}
+
+function populateGridEntityUI(metadata, type, preferredId) {
+  const controls = gridEntityControls[type];
+  if (!controls?.select) return;
+
+  const hasCell = currentGridCellId !== null;
+  controls.addButton && (controls.addButton.disabled = !hasCell);
+
+  const list = Array.isArray(metadata[controls.property]) ? metadata[controls.property] : [];
+  const previousSync = syncGridDetails;
+  syncGridDetails = true;
+
+  const select = controls.select;
+  select.options.length = 0;
+
+  if (!list.length) {
+    select.options.add(new Option(controls.emptyLabel, "", true, true));
+    select.disabled = true;
+    controls.removeButton && (controls.removeButton.disabled = true);
+    controls.popoutButton && (controls.popoutButton.disabled = true);
+    if (controls.nameInput) {
+      controls.nameInput.value = "";
+      controls.nameInput.disabled = true;
+    }
+    if (controls.loreInput) {
+      controls.loreInput.value = "";
+      controls.loreInput.disabled = true;
+    }
+    gridEntitySelection[type] = null;
+    syncGridDetails = previousSync;
+    return;
+  }
+
+  select.disabled = false;
+  list.forEach(entity => {
+    select.options.add(new Option(entity.name || `Unnamed ${controls.label}`, entity.id));
+  });
+
+  const existingId = preferredId && list.some(entity => entity.id === preferredId) ? preferredId : gridEntitySelection[type];
+  const nextId =
+    existingId && list.some(entity => entity.id === existingId) ? existingId : list.length ? list[0].id : null;
+
+  gridEntitySelection[type] = nextId;
+  select.value = nextId || "";
+
+  const selected = list.find(entity => entity.id === nextId) || null;
+  controls.removeButton && (controls.removeButton.disabled = !selected);
+  controls.popoutButton && (controls.popoutButton.disabled = !selected);
+  if (controls.nameInput) {
+    controls.nameInput.disabled = !selected;
+    controls.nameInput.value = selected?.name || "";
+  }
+  if (controls.loreInput) {
+    controls.loreInput.disabled = !selected;
+    controls.loreInput.value = selected?.lore || "";
+  }
+
+  syncGridDetails = previousSync;
+}
+
+function handleGridLoreInput() {
+  if (syncGridDetails || currentGridCellId === null) return;
+  const details = ensureGridCellDetails(currentGridCellId, true);
+  details.lore = gridLoreInput.value;
+}
+
+function handleGridEntityAdd(type) {
+  if (currentGridCellId === null) return tip("Hover a grid square to select it first", false, "warn", 3000);
+  const controls = gridEntityControls[type];
+  if (!controls) return;
+
+  const details = ensureGridCellDetails(currentGridCellId, true);
+  const list = details[controls.property];
+  const entity = createCellEntity(controls.label, controls.defaultName);
+  list.push(entity);
+  gridEntitySelection[type] = entity.id;
+  populateGridEntityUI(details, type, entity.id);
+  controls.nameInput?.focus();
+}
+
+function handleGridEntityRemove(type) {
+  if (currentGridCellId === null) return;
+  const controls = gridEntityControls[type];
+  if (!controls) return;
+
+  const selectionId = gridEntitySelection[type];
+  if (!selectionId) return;
+
+  const details = ensureGridCellDetails(currentGridCellId, true);
+  const list = details[controls.property];
+  const index = list.findIndex(entity => entity.id === selectionId);
+  if (index === -1) return;
+
+  list.splice(index, 1);
+  const fallbackEntity = list[index] || list[index - 1] || null;
+  gridEntitySelection[type] = fallbackEntity ? fallbackEntity.id : null;
+  if (activeGridEntityEditor && activeGridEntityEditor.type === type && activeGridEntityEditor.id === selectionId) {
+    closeGridEntityEditor();
+  }
+  populateGridEntityUI(details, type, gridEntitySelection[type]);
+}
+
+function handleGridEntitySelectionChange(type) {
+  if (syncGridDetails) return;
+  const controls = gridEntityControls[type];
+  if (!controls?.select) return;
+
+  const selectedId = controls.select.value || null;
+  gridEntitySelection[type] = selectedId;
+
+  const details = ensureGridCellDetails(currentGridCellId, false);
+  const entity = getGridEntityById(details, type, selectedId);
+
+  const previousSync = syncGridDetails;
+  syncGridDetails = true;
+
+  controls.removeButton && (controls.removeButton.disabled = !entity);
+  if (controls.nameInput) {
+    controls.nameInput.disabled = !entity;
+    controls.nameInput.value = entity?.name || "";
+  }
+  if (controls.loreInput) {
+    controls.loreInput.disabled = !entity;
+    controls.loreInput.value = entity?.lore || "";
+  }
+
+  controls.popoutButton && (controls.popoutButton.disabled = !entity);
+
+  syncGridDetails = previousSync;
+
+  if (activeGridEntityEditor && activeGridEntityEditor.type === type) {
+    if (!entity) closeGridEntityEditor();
+    else {
+      activeGridEntityEditor.id = selectedId;
+      activeGridEntityEditor.cellId = currentGridCellId;
+      refreshGridEntityEditor();
+    }
+  }
+}
+
+function handleGridEntityNameInput(type) {
+  if (syncGridDetails || currentGridCellId === null) return;
+  const controls = gridEntityControls[type];
+  if (!controls?.nameInput) return;
+
+  const selectedId = gridEntitySelection[type];
+  if (!selectedId) return;
+
+  const details = ensureGridCellDetails(currentGridCellId, true);
+  const entity = getGridEntityById(details, type, selectedId);
+  if (!entity) return;
+
+  entity.name = controls.nameInput.value;
+  updateGridEntityOptionLabel(type, selectedId, entity.name);
+  if (activeGridEntityEditor && activeGridEntityEditor.type === type && activeGridEntityEditor.id === selectedId) {
+    gridEntityEditorName.value = entity.name || "";
+  }
+}
+
+function handleGridEntityLoreInput(type) {
+  if (syncGridDetails || currentGridCellId === null) return;
+  const controls = gridEntityControls[type];
+  if (!controls?.loreInput) return;
+
+  const selectedId = gridEntitySelection[type];
+  if (!selectedId) return;
+
+  const details = ensureGridCellDetails(currentGridCellId, true);
+  const entity = getGridEntityById(details, type, selectedId);
+  if (!entity) return;
+
+  entity.lore = controls.loreInput.value;
+  if (activeGridEntityEditor && activeGridEntityEditor.type === type && activeGridEntityEditor.id === selectedId) {
+    gridEntityEditorLore.value = entity.lore || "";
+  }
+}
+
+function ensureGridCellDetails(cellId, create = false) {
+  if (cellId === null || cellId === undefined) return null;
+  if (!grid.cellDetails) {
+    if (!create) return null;
+    grid.cellDetails = {};
+  }
+
+  let details = grid.cellDetails[cellId];
+  if (!details && create) {
+    details = {lore: "", locations: [], characters: []};
+    grid.cellDetails[cellId] = details;
+  }
+
+  if (details) {
+    if (!Array.isArray(details.locations)) details.locations = [];
+    if (!Array.isArray(details.characters)) details.characters = [];
+    if (typeof details.lore !== "string") details.lore = "";
+  }
+
+  return details || null;
+}
+
+function createCellEntity(label, defaultName) {
+  const uniqueId = `${label}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+  return {id: uniqueId, name: defaultName, lore: ""};
+}
+
+function getGridEntityById(details, type, id) {
+  if (!details || !id) return null;
+  const controls = gridEntityControls[type];
+  if (!controls) return null;
+  const list = details[controls.property];
+  if (!Array.isArray(list)) return null;
+  return list.find(entity => entity.id === id) || null;
+}
+
+function updateGridEntityOptionLabel(type, id, label) {
+  const controls = gridEntityControls[type];
+  if (!controls?.select) return;
+  const option = Array.from(controls.select.options).find(opt => opt.value === id);
+  if (option) option.textContent = label || `Unnamed ${controls.label}`;
+}
+
+function handleGridEntityPopout(type) {
+  if (currentGridCellId === null) return tip("Hover a grid square to select it first", false, "warn", 3000);
+  const controls = gridEntityControls[type];
+  if (!controls) return;
+
+  const selectedId = gridEntitySelection[type];
+  if (!selectedId) return tip(`Select a ${controls.label} first`, false, "warn", 3000);
+
+  const details = ensureGridCellDetails(currentGridCellId, false);
+  const entity = getGridEntityById(details, type, selectedId);
+  if (!entity) return tip(`Selected ${controls.label} is not available`, false, "error", 3000);
+  if (!gridEntityEditor) return;
+
+  activeGridEntityEditor = {type, id: selectedId, cellId: currentGridCellId};
+  ensureGridEntityEditorDialog();
+  refreshGridEntityEditor();
+
+  const title = type === "locations" ? "Location Details" : "Character Details";
+  if (window.jQuery) {
+    const $editor = window.jQuery(gridEntityEditor);
+    $editor.dialog("option", "title", title);
+    $editor.dialog("option", "width", 520);
+    $editor.dialog("option", "position", {my: "right top", at: "right-30 top+140", of: "svg", collision: "fit"});
+    $editor.dialog("open");
+  }
+
+  gridEntityEditorName?.focus();
+}
+
+function ensureGridEntityEditorDialog() {
+  if (!gridEntityEditor || !window.jQuery) return;
+  const $editor = window.jQuery(gridEntityEditor);
+  if (!$editor.hasClass("ui-dialog-content")) {
+    $editor.dialog({
+      autoOpen: false,
+      resizable: true,
+      modal: false,
+      width: 520,
+      close: () => {
+        activeGridEntityEditor = null;
+      }
+    });
+  }
+}
+
+function refreshGridEntityEditor() {
+  if (!activeGridEntityEditor || !gridEntityEditor) return;
+  if (activeGridEntityEditor.cellId !== currentGridCellId) {
+    closeGridEntityEditor();
+    return;
+  }
+
+  const {type, id} = activeGridEntityEditor;
+  const details = ensureGridCellDetails(currentGridCellId, false);
+  const entity = getGridEntityById(details, type, id);
+  if (!entity) {
+    closeGridEntityEditor();
+    return;
+  }
+
+  if (gridEntityEditorName) gridEntityEditorName.value = entity.name || "";
+  if (gridEntityEditorLore) gridEntityEditorLore.value = entity.lore || "";
+
+  if (window.jQuery && window.jQuery(gridEntityEditor).hasClass("ui-dialog-content")) {
+    const title = type === "locations" ? "Location Details" : "Character Details";
+    window.jQuery(gridEntityEditor).dialog("option", "title", title);
+  }
+}
+
+function closeGridEntityEditor() {
+  if (gridEntityEditor && window.jQuery && window.jQuery(gridEntityEditor).hasClass("ui-dialog-content")) {
+    if (window.jQuery(gridEntityEditor).dialog("isOpen")) window.jQuery(gridEntityEditor).dialog("close");
+  }
+  activeGridEntityEditor = null;
+}
+
+function handleGridEntityEditorNameInput() {
+  if (!activeGridEntityEditor) return;
+  const {type, id, cellId} = activeGridEntityEditor;
+  const details = ensureGridCellDetails(cellId, true);
+  const entity = getGridEntityById(details, type, id);
+  if (!entity) return;
+
+  entity.name = gridEntityEditorName.value;
+  if (cellId === currentGridCellId) {
+    if (gridEntitySelection[type] === id) {
+      const controls = gridEntityControls[type];
+      if (controls?.nameInput) {
+        const previousSync = syncGridDetails;
+        syncGridDetails = true;
+        controls.nameInput.value = entity.name;
+        syncGridDetails = previousSync;
+      }
+    }
+    updateGridEntityOptionLabel(type, id, entity.name);
+  }
+}
+
+function handleGridEntityEditorLoreInput() {
+  if (!activeGridEntityEditor) return;
+  const {type, id, cellId} = activeGridEntityEditor;
+  const details = ensureGridCellDetails(cellId, true);
+  const entity = getGridEntityById(details, type, id);
+  if (!entity) return;
+
+  entity.lore = gridEntityEditorLore.value;
+  if (cellId === currentGridCellId && gridEntitySelection[type] === id) {
+    const controls = gridEntityControls[type];
+    if (controls?.loreInput) {
+      const previousSync = syncGridDetails;
+      syncGridDetails = true;
+      controls.loreInput.value = entity.lore;
+      syncGridDetails = previousSync;
+    }
+  }
+}
+
+function getDistanceToCoastLabel(distance, isLand) {
+  if (distance === undefined || distance === null || Number.isNaN(distance)) return "n/a";
+
+  const suffix = ` (${distance})`;
+  if (distance === 1) return `Coastal land${suffix}`;
+  if (distance === 2) return `Landlocked edge${suffix}`;
+  if (distance > 2) return `Inland +${distance - 2}${suffix}`;
+  if (distance === -1) return `Coastal water${suffix}`;
+  if (distance <= -2) return `Deep water +${Math.abs(distance) - 1}${suffix}`;
+  return `${isLand ? "Interior land" : "Open water"}${suffix}`;
+}
+
+function formatFeatureLabel(feature, id) {
+  if (!feature || !id) return "n/a";
+  const name = feature.fullName || feature.name || feature.type || feature.group || "feature";
+  return `${name} (${id})`;
 }
 
 function getGeozone(latitude) {

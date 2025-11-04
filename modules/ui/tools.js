@@ -955,9 +955,10 @@ function configMarkersGeneration() {
 }
 
 function viewCellDetails() {
+  if (window.showCellInfoPage) showCellInfoPage("cell");
   $("#cellInfo").dialog({
     resizable: false,
-    width: "22em",
+    width: "24em",
     title: "Cell Details",
     position: {my: "right top", at: "right-10 top+10", of: "svg", collision: "fit"}
   });
